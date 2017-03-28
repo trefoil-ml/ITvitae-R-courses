@@ -1,27 +1,31 @@
 ---
 title: "Filter, arrange, select and mutate"
 author: "Hicham Zmarrou"
-date: "March 16, 2017"
+date: "March 29, 2017"
 output: html_document
 ---
 
 
-Visualisation is an important tool for insight generation, but 
+Often you'll need to create some new variables or summaries, or maybe you just want to rename the variables or reorder the observations in order to make the data a little easier to work with. 
 
-+ Not always you have the right data to visualise 
-
-+ Often you'll need to create some new variables or summaries, or maybe you just want to rename the variables or reorder the observations in order to make the data a little easier to work with. 
-
-+ You'll learn how to do all that (and more!) in this part of the course, which will teach you how to transform your data using the dplyr package and a new dataset on flights departing New York City in 2013.
+You'll learn how to do all that (and more!) in this part of the course, which will teach you how to transform your data using the dplyr package and a new dataset on flights departing New York City in 2013.
 
 ### Prerequisites
 
-+ Focus on how to use the dplyr package, another core member of the tidyverse. 
++ Focus on how to use the dplyr package, a core member of the tidyverse package. Tidyverse is a set of packages that work in harmony because they share common data representations and API design. The tidyverse package is designed to make it easy to install and load core packages from the tidyverse in a single command.  
 
 + Data from the nycflights13 package, and use ggplot2 to help us understand the data. 
 
 
 ```{r setup, message = FALSE}
+
+if (!require(nycflights13)){ 
+        install.packages(nycflights13) 
+} 
+
+if (!require(tidyverse)){ 
+        install.packages(tidyverse) 
+}
 library(nycflights13)
 library(tidyverse)
 ```
@@ -38,6 +42,7 @@ To explore the basic data manipulation verbs of dplyr, we'll use `nycflights13::
 
 ```{r}
 flights
+help(flights)
 ```
 
 You might notice that this data frame prints a little differently from other data frames you might have used in the past: it only shows the first few rows and all the columns that fit on one screen. (To see the whole dataset, you can run `View(flights)` which will open the dataset in the RStudio viewer). It prints differently because it's a __tibble__. Tibbles are data frames, but slightly tweaked to work better in the tidyverse. For now, you don't need to worry about the differences; we'll come back to tibbles in more detail in [wrangle](#wrangle-intro).

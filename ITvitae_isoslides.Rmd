@@ -1,0 +1,66 @@
+---
+title: "First steps in R"
+author: "Hicham Zmarrou, PhD"
+date: "March 29, 2017"
+output: ioslides_presentation
+logo: img/R_logo.svg.png
+---
+
+# Overview
+
+## Goals 
+
+### **You will learn:**
+
+<center>![picture of spaghetti](img/data-science.png)</center>
+<center> Data science cycle (source: [R for Data Science](http://r4ds.had.co.nz/))</center>
+ 
+
+
+## Data import 
+
+<center>![import](img/image03sml.png)</center>
+
+
+## Data tidying and transformation 
+
+<center>![tidy](img/data-tidy.png)</center>
+
+
+## Data visualisation and modeling
+
+<center>![vis](img/vis-mod.png)</center>
+
+## Results communication 
+
+<center>![comm](img/communicate.png)</center>
+
+## Outline
+### __Day 3__ 
+
+#### Data transformation with __dplyr__
+
+* filter; arrange ; select and mutate 
+* Grouping  and summarizing 
+* [Less known dplyr tricks](https://www.r-bloggers.com/lesser-known-dplyr-tricks/)
+
+#### Data wrangling
+
+* Tibbles with **tibble**
+* Data import
+* tidy data with tidyr
+
+## Outline
+### __Day 4__ 
+
+ * R markdown and  R Notebooks. 
+ 
+ * R flexdashboard. 
+ 
+ * Making a website Using Blogdown, Hugo, and GitHub pages.
+ 
+ * Publish  your R postfolio on the website.  
+
+
+
+
