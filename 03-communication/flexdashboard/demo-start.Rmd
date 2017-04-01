@@ -1,14 +1,16 @@
 ---
 title: "flexdashboard: Easy interactive dashboards for R"
 output: 
-   flexdashboard::flex_dashboard:
-    orientation: rows
-    social: menu
-    source: embed
+    flexdashboard::flex_dashboard:
+      orientation: rows
+      vertical_layout: scroll
+      social: menu
+      source: embed 
 ---
 
 
-# Intro to text  {.sidebar}
+# Introduction {.sidebar} 
+
 You can use flexdashboard to publish groups of related data visualizations as a dashboard. A flexdashboard can either be static (a standard web page) or dynamic (a Shiny interactive document). A wide variety of components can be included in flexdashboard layouts, including:
 
 ```{r include = FALSE}
@@ -50,9 +52,8 @@ colstops <- data.frame(
 
 # Page 1 {data-icon="fa-list"}
 
-## Column {data-heights=350}
-
-### ggplot2 Plots  
+## Column   
+### ggplot2 Plots
 
 ```{r}
 ggplot(mpg, aes(displ, hwy)) +
@@ -60,9 +61,9 @@ ggplot(mpg, aes(displ, hwy)) +
   geom_smooth()
 ```
 
-## Column {data-heights=650 .tabset .tabset-fade}
+## Column  {data-height=650 .tabset .tabset-fade} 
 
-### htmlwidgets {data-width=300}
+### htmlwidgets {data-width=300} 
 
 ```{r}
 highchart() %>%
@@ -76,7 +77,7 @@ highchart() %>%
   hc_add_theme(thm)
 ```
 
-### tables {data-width=700}
+### tables  {data-width=700} 
 
 ```{r}
 library(DT)
@@ -85,20 +86,15 @@ datatable(iris, options = list(pageLength = 10))
 
 # Page 2 {data-icon="fa-map"}
 
-## Column 
+## Column 1
 
 ### base plots
 
 ```{r}
+
 plot(mpg$displ, mpg$hwy)
+
 ```
 
-### text
 
-> A more exhaustive list includes: Interactive JavaScript data visualizations based on htmlwidgets; R graphical output including base, lattice, and grid graphics; tabular data (with optional sorting, filtering, and paging); value boxes for highlighting important summary data; gauges for displaying values on a meter within a specified range; and text annotations of various kinds.
-
-### Frame caption navigation 
-
-```{r }
-library(d3)
-```
+> A more exhaustive list includes: Interactive JavaScript data visualizations based on htmlwidgets; R graphical output including base, lattice, and grid graphics; tabular data (with optional sorting, filtering, and paging); value boxes for highlighting important summary data; gauges for displaying values on a meter within a specified range; and text annotations of various l

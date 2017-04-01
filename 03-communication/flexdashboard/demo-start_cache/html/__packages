@@ -4,3 +4,9 @@ highcharter
 viridisLite
 ggplot2
 DT
+rpart
+lattice
+RevoScaleR
+RevoMods
+RevoUtils
+RevoUtilsMath

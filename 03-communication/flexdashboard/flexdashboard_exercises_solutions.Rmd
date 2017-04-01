@@ -1,0 +1,22 @@
+---
+title: "Felxdashboard exercises"
+author: "Hicham Zmarrou"
+date: "31 maart 2017"
+output: html_document
+---
+
+## Exercises   
+
+1. Remove all of the line breaks from [this document](two_stocks.Rmd). Then turn it into a flexdashboard like the one below. The price graphs are in their own column, as are the volume graphs.
+
+<center>![dashboard1](images/dashboard1.png)</center>
+
+
+2. Use `{.sidebar}` to move the text at the top of your dashboard into a sidebar. Then migrate each column to its own page. The results should look like this:
+<center>![dashboard1](images/dashboard2.png)</center>
+
+
+
+
+
+
