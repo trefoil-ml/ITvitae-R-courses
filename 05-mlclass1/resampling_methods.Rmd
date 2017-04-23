@@ -1,0 +1,231 @@
+---
+title: "Resampling methods"
+author: "Hicham Zmarrou"
+date: "`r Sys.Date()`"
+output:
+  html_notebook:
+    highlight: pygments
+    theme: cosmo
+    toc: true
+    toc_float: true
+    slide_level: 2
+    number_sections: TRUE
+---
+<hr>
+
+[Visit my website](http://trefoil.ml/) for more like this!
+
+__References__
+
+Most of this material is borrowed from:
+
+* Textbook: [Introduction to statistical learning](http://www-bcf.usc.edu/~gareth/ISL/)
+
+* Textbook: [Elements of statistical learning](https://statistics.stanford.edu/~tibs/ElemStatLearn/)
+
+* UCLA Example [link](http://www.ats.ucla.edu/stat/r/dae/logit.htm)
+
+* [Wikipedia](http://en.wikipedia.org/)
+
+```{r load_knitr, include=FALSE}
+require(knitr)
+```
+
+# Overview
+
+Resampling methods have become and integral tool in modern statistics. Resampling is based on repeatedly drawing samples from a training set of observations and refitting a model on each sample in order to obtain additional insights into that model. For example: to examine the robustness and variability of a linear regression, we can fit a linear regression to each new sample and examine the difference in the results. The goal for any resampling measure is to better estimate how a statistical model will perform on out of sample, 'real-life' data.
+
+In this notebook I cover:
+
+  * Cross-Validation
+  * Bootstrap
+  
+# Cross-Validation
+
+Recall...
+
+* _Test error rate_ is the average error from using a statistical method to predict the response on a _new_ observation.
+
+* _Training error rate_ is simply the average error from a statistical method that uses predictions based on the data that was used to fit the model in the first place.
+
+We always prefer to utilize the test error rate to measure model performance, since training error rate can dramatically over-estimate real-world performance. Sometimes, simply splitting the data to obtain testing and training dataset is not recommended due to the small size of the sample. 
+
+_Cross-validation_ estimates the test error rate by holding out a subset of the training observations from the fitting process, and then applying the statistical method to those held out observations. This process can be repeated several times to enable more data to partake in the training of the model, one subset at a time.
+
+## Validation Set 
+
+Prior to explaining _cross-validation_ we describe the more basic validation set approach, and it's drawbacks. In this method, we randomly divide the available data into two parts, a training set, and a validation set. The model is fit on the training set, then the fitted model is used to predict the responses for the observations in the validation set. Typically, the performance of the models are measured using MSE. 
+
+To attain a more robust measure of fit, we can repeatedly randomly sample the data, and compute the MSE, then compare the results. The _validation approach_ is simple and easy to implement, but it has two potential problems.
+
+  * The validation estimate can be highly variable and depend highly upon which observations are included in the training set / validation set.
+  * Only a subset of the observations are used to train the model, and for training models, the more data the better.
+  
+## Leave-Out-Out Cross-Validation
+
+Like the _validation_ approach, LOOCV involves splitting the set of observations into two parts. However, instead of creating two subsets of comparable size, a single observation ($x1, y1$) is used for the validation set, and the remaining data make up the training set. Even though the validation set is an unbiased test error, we can imagine that it could be highly variable, since it is based on a single observation.
+
+To remedy this, we repeat the procedure _n_ times by alliteratively _leaving_ one observation out, and then computing the average MSE of all _n_ test estimates.
+
+_Advantages over the simple validation approach_:
+
+  * Much less bias, since the training set contains n - 1 observations.
+  * There is no randomness in the training/validation sets. Performing LOOCV many times will always result in the same MSE.
+
+_Drawbacks_:
+
+  * Can become computationally expensive, since the model is trained _n_ times.
+
+## k-Fold Cross-Validation
+
+An alternative to LOOCV. This method randomly divides a set of observations into _k_ groups, for _folds_, of approximately equal size. Each fold contains a non overlapping (with the subsequent folds) validation set and training set. The approach could be though of as a hybrid of both the LOOCV and the validation approach. In fact LOOCV is a special case of _k_-folds where`k = n`. The advantage of this is computational speed. 
+
+For example, a 5-fold CV would re sample the training and validation sets in a non-overlapping fashion 5 times, such that all of the data is eventually used as training data. The test error is then estimated by averaging the five resulting MSE estimates.
+
+The difference between a 5, 10 _n_ or other sized _k_-folds CV is the bias-variance trad-off. Though generally, a 10-fold cross-validation will not be too different from a LOOCV.
+
+## The Bias-Variance Trade-off for _k_-fold CV
+
+It turns out that _k_-fold cross validation also provides better estimates of the test error rate than LOOCV, in addition to being computationally superior.
+
+Though LOOCV will provide less bias, since we are using more samples in the training set, it also yields high test error variance. This is because in LOOCV we are essentially averaging the outputs of _n_ nearly identical models, since each model is training on the same observations minus 1. Thus the averaged errors are highly correlated with each other. Since the mean of many highly correlated quantities has a higher variance than many quantities that are not highly correlated, LOOCV tends to have higher error variance than _k_-fold CV.
+
+_k_-folds of `k=5`, or `k=10` have been empirically shown to yield test error rates that do not suffer from excessive bias or variance.
+
+## Using Cross-Validation for Classification Problems
+
+Cross validation can also be used in a qualitative setting. With qualitative data, we utilize the number of classifieds observations to quantify test error, rather than MSE. The estimated test error rate using _k_-folds is much more robust than the training error rate, when deciding what order of polynomial to keep, or what value of _K_ we should use in a KNN classification. This is because training error rate often decays as the method becomes more flexible, yet also means we will eventually over-fit the model.
+
+## Bootstrap
+
+Bootstrapping is a powerful tool that can be used to quantify the uncertainty associated with a given estimator or statistical learning method. For example, a bootstrap can be used to estimate the standard errors of the coefficient from a linear regression fit. While this is not a ground breaking example, since standard errors can be rather easily computed in linear regression, the power of bootstrap comes from its ability to be easily applied to a wide range of learning methods, including some for which a measure of variability is otherwise difficult to obtain.
+
+For example, consider an investor who wishes to distribute his/her assets in order to minimize risk. Though to complete this formula, we need to understand the variance of the investments _X_ and _Y_. To do this, we can simulate 100 pairs of returns for the investments of _X_ and _Y_. Then to quantify the accuracy of this minimized risk, we repeat the process of simulating 100 paired observations (with replacement) of _X_ and _Y_ 1000 (or more) times. We are essentially estimating the true underlying distribution of the data, by relying on the random properties of the thousands of sub samples, which come close to estimating the true variance that could be found in real data. This ends up giving us a very good idea of the accuracy of the minimized risk. 
+
+# Code Examples
+
+### Validation Set Approach
+
+Here we estimate the error rates that result from various linear models in the `Auto` dataset
+
+```{r}
+library(ISLR)
+attach(Auto)
+```
+
+Set the seed using `set.seed()` so that you can replicate these results. First we use the `sample()` function to split the data into two halves, the training and validation set. We then proceed to fit and predict linear models.
+
+```{r}
+set.seed(1)
+train = sample(392, 196)
+
+# Fit linear model
+lm.fit <- lm(mpg ~ horsepower, data=Auto, subset=train)
+# Predict and calculate MSE of the validation set.
+mean((mpg - predict(lm.fit, Auto))[-train]^2)
+```
+
+Here the MSE is 26.14, let's test the MSE for a linear regression using polynomial and cubic regressions.
+
+```{r}
+# Polynomial lm
+lm.fit2 <- lm(mpg ~ poly(horsepower, 2), data=Auto, subset = train)
+mean((mpg - predict(lm.fit2, Auto))[-train]^2)
+# Cubic lm
+lm.fit3 <- lm(mpg ~ poly(horsepower, 3), data=Auto, subset = train)
+mean((mpg - predict(lm.fit3, Auto))[-train]^2)
+```
+
+However, if we chose a different training set, we will return different errors on the validation set.
+
+```{r}
+set.seed(2)
+train <- sample(392, 196)
+lm.fit <- lm(mpg ~ horsepower, subset=train)
+
+mean((mpg - predict(lm.fit, Auto))[-train]^2)
+```
+
+It ends up being that the quadratic function still maintains the lowest MSE of the three models, and we would conclude that this was our best model moving forward.
+
+### LOOCV
+
+the LOOCV estimated can be automatically computed in many R packages, include `glm()` using `cv.glm()`. `glm()` without the `family='binomial'` argument performs linear regression. 
+
+```{r}
+library(boot)
+
+glm.fit <- glm(mpg ~ horsepower, data=Auto)
+cv.err <- cv.glm(Auto, glm.fit)
+summary(cv.err)
+cv.err$delta
+```
+
+The two numbers in the `delta` vector contain the cross-validation results. Thus cross-validation for the test error is roughly 24.23.
+
+We can demonstrate a more thorough example using a loop.
+
+```{r}
+cv.err <- rep(0, 5)
+system.time(for (i in 1:5) {
+  glm.fit <- glm(mpg ~ poly(horsepower, i), data=Auto)
+  cv.err[i] <- cv.glm(Auto, glm.fit)$delta[1]
+})
+cv.err
+```
+
+As you can see there is a sharp drop in MSE between linear and quadratic fits, but then no further improvement. We would settle on a quadratic fit for this data.
+
+### _k_-Fold CV
+
+We use the same `cv.glm()` function to implement _k_-folds. First we use _k_ = 10 on the `Auto` dataset.
+
+```{r}
+set.seed(17) # For reproduction
+cv.err <- rep(0, 10)
+
+system.time(for (i in 1:10) {
+  glm.fit <- glm(mpg ~ poly(horsepower, i), data=Auto)
+  cv.err[i] <- cv.glm(Auto, glm.fit, K=10)$delta[1]
+})
+cv.err
+```
+
+Notice the time it took to complete the cross validation was dramatically shorter. The results are similar.
+
+> Note: for _k_-folds, the two delta parameters may differ (unlike LOOCV). The first value is the standard _k_-fold estimate, the second is a bias-corrected version.
+
+### Boostrap
+
+To showcase bootstrap, we can estimate the accuracy of a simple linear regression model on the `Auto` dataset.
+
+Perhaps the biggest advantage of the bootstrap is that it can be applied in almost every situation. In R, first we create a function that computes the statistic of interest. Second, we use the `boot()` function to perform the bootstrap by repeatedly sampling observations from the dataset with replacement. Recall, boostrapping can be used to asses the variability of the coefficient estimates and predictions from a statistical model. Here we asses the variability of  β0 and β1 for the linear regression between `mpg` and `horsepower`.
+
+```{r}
+boot.fn <- function(data, index) {
+  return(coef(lm(mpg ~ horsepower, data=Auto, subset = index)))
+}
+boot.fn(Auto, 1:392)
+```
+
+With the `boot.fn()` in place we can create bootstrap estimates for the intercept and slope terms by randomly sampling observations with replacement.
+
+```{r}
+set.seed(1)
+boot.fn(Auto, sample(x=392, size=392, replace = T))
+boot.fn(Auto, sample(x=392, size=392, replace = T))
+```
+
+Now let's use the actual `boot()` function to do this automatically.
+
+```{r}
+boot(Auto, boot.fn, 1000)
+```
+
+Now examine the standard errors for the plain linear model
+
+```{r}
+summary(lm(mpg ~ horsepower, data=Auto))$coef
+```
+
+The SE estimates from the regression without bootstrap are lower, but we should trust the bootstrap version. Why? In-fact the estimates for the standard errors in linear regression depend on the linear model actually being correct. Yet, in this case, there is actually a non-linear effect in the model, thus the residuals and variance will be inflated. The bootstrap approach does not rely on any of these types of assumptions. If we fit a quadratic model that fits the data better, we would see less discrepancy between these two SE estimates.

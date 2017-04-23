@@ -1,0 +1,460 @@
+---
+title: "Linear model selection and regularization"
+author: "Hicham Zmarrou"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    highlight: pygments
+    theme: cosmo
+    toc: true
+    toc_float: true
+    slide_level: 2
+    number_sections: TRUE
+---
+<hr>
+
+[Visit my website](http://trefoil.ml/) for more like this!
+
+__References__
+
+Most of this material is borrowed from:
+
+* Textbook: [Introduction to statistical learning](http://www-bcf.usc.edu/~gareth/ISL/)
+
+* Textbook: [Elements of statistical learning](https://statistics.stanford.edu/~tibs/ElemStatLearn/)
+
+* UCLA Example [link](http://www.ats.ucla.edu/stat/r/dae/logit.htm)
+
+* [Wikipedia](http://en.wikipedia.org/)
+
+```{r load_knitr, include=FALSE}
+require(knitr)
+```
+
+__Overview and Definitions__
+
+In this lesson we consider some alternative fitting approaches for linear models, besides the usual _ordinary least squares_. These alternatives can sometimes provide better prediction accuracy and model interpretability.
+
+1. __Prediction Accuracy__: 
+
+   + Given that the true relationship between $Y$ and $X$ is approx. linear, the ordinary least squares estimates will have low bias. OLS also behaves well when $n$ >> $p$. 
+
+   + if $n$ is not much larger than $p$, then there can be a lot of variability in the fit, resulting in overfitting and/or poor predictions. If $p$ > $n$, then there is no longer a unique least squares estimate, and the method cannot be used at all. 
+
+   + By _constraining_ and _shrinking_ the estimated coefficients, we can often substantially reduce the variance as the cost of a negligible increase in bias, which often leads to dramatic improvements in accuracy.
+
+2. __Model Interpretability__: Often in multiple regression, many variables are not associated with the response. Irrelevant variables leads to unnecessary complexity in the resulting model. By removing them (setting coefficient = 0) we obtain a more easily interpretable model. However, using OLS makes it very unlikely that the coefficients will be exactly zero. Here we explore some approach for automatically excluding features using this idea.
+
+    + *Subset Selection*: This approach identifies a subset of the $p$ predictors that we believe to be related to the response. We then fit a model using the least squares of the subset features.
+    
+    + _Shrinkage_. This approach fits a model involving all $p$ predictors, however, the estimated coefficients are shrunken towards zero relative to the least squares estimates. This shrinkage, aka _regularization_ has the effect of reducing variance. Depending on what type of shrinkage is performed, some of the coefficients may be estimated to be exactly zero. Thus this method also performs variable selection.
+    
+    + _Dimension Reduction_: This approach involves projecting the $p$ predictors into an $M$-dimensional subspace, where $M$ < $p$. This is attained by computing $M$ different _linear combinations_, or _projections_, of the variables. Then these $M$ projections are used as predictors to fit a linear regression model by least squares.
+    
+Though we discuss the application of these techniques to regression models, they also apply to other methods like classification.
+
+
+# Methods in detail
+
+## Subset selection
+
+### Best subset selection
+
+Here we fit a separate OLS regression for each possible combination of the $p$ predictors and then look at the resulting model fits. The problem with this method is the _best model_ is hidden within $2^p$ possibilities. The algorithm is broken up into three stages. 
+
+
+
+1. We start with the $\mathcal{M_0}$ denote the null model, which contains no predictors. This model simply predicts the sample mean  for each observation.
+
+2. For $k = 1, 2,\ldots,p$
+    a. Fit all ${p \choose k}$ models that contain exactly $k$ predictors.
+    b. Pick the best among these ${p \choose k}$ models, and call it $\mathcal{M_k}$. Here best is defined as having the smallest $RSS$, or equivalently largest $R^2$
+
+3. Select a single best model from among $\mathcal{M_0},\ldots \mathcal{M_p}$ using cross-validated prediction error, $Cp, AIC, BIC$, or adjusted $R^2$.
+
+
+> This works on other types of model selection, such as logistic regression, except that the score that we select upon changes. For logistic regression we would utilize _deviance_ instead of $RSS$ and $R^2$.
+
+Next we discuss methods that are more computationally efficient.
+
+
+### Stepwise selection
+
+Besides computational issues, the _best subset_ procedure also can suffer from statistical problems when $p$ is large, since we have a greater chance of overfitting.
+
+  * _Forward Stepwise Selection_ considers a much smaller subset of $p$ predictors. It begins with a model containing no predictors, then adds predictors to the model, one at a time until all of the predictors are in the model. The order of the variables being added is the variable, which gives the greatest addition improvement to the fit, until no more variables improve model fit using cross-validated prediction error. A _best subset_ model for $p$ = 20 would have to fit 1 048 576 models, where as forward step wise only requires fitting 211 potential models. However, this method is not guaranteed to find the best model. Forward stepwise regression can even be applied in the high-dimensional setting where $p$ > $n$.
+  
+  * _Backward Stepwise Selection_ begins will all $p$ predictors in the model, then iteratively removes the least useful predictor one at a time. Requires that $n$ > $p$.
+  
+  * _Hybrid Methods_ follows the forward stepwise approach, however, after adding each new variable, the method may also remove any variables that do not contribute to the model fit.
+  
+### Choosing the best model
+
+Each of the three above-mentioned algorithms requires us to manually decide which model performs best. As mentioned before, the models with the most predictors will usually have the smallest $RSS$ and largest $R^2$ when using training error. To select the model with the best _test_ error, we need to estimate the test error. There are two ways to compute test error.
+
+1. _Indirectly_ estimate the test error by making and adjustment to the training error to account for the over fitting bias.
+
+2. _Directly_ estimate the test error, using either a validation set, or cross-validation approach.
+
+### The metrics Cp, AIC, BIC, and Adjusted R-square
+
+These four metrics are the four common approaches to _adjust_ the training error to estimate test error.
+
++ $C_p$ statistic adds a penalty of $2.d.\sigma^2$ to the training $RSS$ given that the training error tends to underestimate the test error, where $d$ is the number of predictors and $\sigma^2$ is an estimate of the variance of the error associated with each response measurement. 
+$$ C_p = \frac{1}{n}(RSS + 2.d.\sigma^2)$$
+
++ $AIC$ criterion is defined for a large class of models fit by maximum likelihood (ML). In the case of a Gaussian model, ML and OLS are equivalent. Thus for OLS models, $AIC$ and $C_p$ are proportional to each other and only differ in that $AIC$ has an additive constant term.
+$$AIC = \frac{1}{n.\sigma^2}(RSS + 2.d.\sigma^2)$$
+
+
++ $BIC$ is derived from a Bayesian point of view, but looks similar to AIC and $C_p$. For an OLS model with $d$ predictors, the $BIC$ replaces the $2  \times d \times \sigma^2$ from $C_p$ with $\log(n) d σ^2$, where $n$ is the number of observations. Since log $n$ > 2 for a $n$ > 7, the $BIC$ statistic generally places a heavier penalty on models with many variables, and results in smaller models.
+$$ BIC = = \frac{1}{n}(RSS + \log(n).d.\sigma^2)$$ 
+
++ The _adjusted_ $R^2$ adds a penalty term for additional variables being added to the model:
+
+$$ Adjusted~R^2 = 1 −  \frac{\frac{RSS}{(n − d − 1)}}{\frac{TSS}{(n-1)}}$$
+
+Unlike $Cp, AIC$, and $BIC$, for which a small value indicates a model with a low test error, a large value of adjusted $R^2$ indicates a model with a small test error. Maximizing the adjusted $R^2$ is equivalent to minimizing $\frac{RSS}{n−d−1}$. 
+
+While $RSS$ always decreases as the number of variables in the modelincreases, $\frac{RSS}{n−d−1}$ may increase or decrease, due to the presence of d in the
+denominator.
+
+All these statistics have rigorous theoretical justifications, but they still all rely (to some degree) on certain arguments, like large $n$. 
+
+### Validation and cross-validation
+
+These approaches discussed in detail [here]("/ML/resampling_methods.rmd).
+
+In general, cross validation techniques are more direct estimates of test error, and makes fewer assumptions about the underlying model. Further, it can be used in a wider selection of model types.
+
+> Note: it is common for many models to have similar test errors. In this situation it is often better to pick the simplest model.
+
+## Shrinkage methods
+
+The subset selection methods described above used least squares fitting that contained a subset of the predictors to choose the best model, and estimate test error.  Here, we discuss an alternative where we fit a model containing __all__ $p$ predictors using a technique that _constrains_ or _regularizes_ the coefficient estimates, or equivalently, that _shrinks_ the coefficient estimates towards zero. The shrinking of the coefficient estimates has the effect of significantly reducing their variance. The two best-known techniques for shrinking the coefficient estimates towards zero are the _ridge regression_ and the _lasso_.
+
+### Ridge regression
+
+Ridge regression is similar to least squares except that the coefficients are estimated by minimizing a slightly different quantity. Ridge regression, like OLS, seeks coefficient estimates that reduce $RSS$, however they also have a shrinkage penalty when the coefficients come closer to zero. This penalty has the effect of shrinking the coefficient estimates towards zero. 
+OLS minimizes 
+$$ RSS  = \sum_{1}^{n}\left(y_i-\beta_0-\sum_{1}^{p}\beta_ix_i \right)^2$$
+Ridge regression minimizes 
+$$ RSS +\lambda \sum_{1}^{p}\beta_i^2 = \sum_{1}^{n}\left(y_i-\beta_0-\sum_{1}^{p}\beta_ix_i \right)^2 + \lambda \sum_{1}^{p}\beta_i^2 $$
+
+A parameter, $\lambda$, controls the impact of the shrinking. $\lambda$ = 0 will behave exactly like OLS regression. Of course, selection a good value for $\lambda$ is critical, and should be chosen using cross validation techniques. A requirement of ridge regression is that the predictors $X$ have been centered to have a `mean = 0`, thus the data must be standardized before hand. 
+
+> Note that the shrinkage does not apply to the intercept. 
+
+#### Why is ridge regression better than least squares?
+
+The ridge regression has two important advantages over the linear regression. The most important one is that it penalizes the estimates. It doesn't penalize all the feature’s estimate arbitrarily. If estimates $\beta$ value are very large, then the RSS term in the above equation will minimize, but the penalty term will increases. If estimates $\beta$ values are small, then the penalty term in the above equation will minimize, but, the RSS term will increase due to poor generalization. So, it chooses the feature's estimates $\beta$ to penalize in such a way that less influential features (Some features cause very small influence on dependent variable) undergo more penalization. In some domains, the number of independent variables is many, as well as we are not sure which of the independent variables influences dependent variable. In this kind of scenario, ridge regression plays a better role than linear regression.
+
+Another advantage of ridge regression over OLS is when the features are highly correlated with each other, then the rank of matrix X will be less than $p+1$ (where $p$ is number of regressors). So, the inverse of $X^t X$ doesn't exist, which results to OLS estimate may not be unique.
+
+The ridge regression estimate is given by
+
+$$ \beta^{ridge}=(X^tX+\lambda I)^{−1}X^tY$$  
+
+For ridge regression, we are adding a small term $\lambda$ along the diagonals of $X^tX$. It makes the $x^t X+ \lambda I$ matrix to be invertible (All the columns are linearly independent).
+> Ridge regression works best in situations for least squares estimates have high variance. Ridge regression is also much more computationally efficient that any _subset method_, since it is possible to simultaneously solve for all values of $\lambda$.
+
+### The Lasso (least absolute shrinkage and selection operator)
+
+Ridge regression had at least one disadvantage; it includes all $p$ predictors in the final model. The penalty term will set many of them close to zero, but never _exactly_ to zero. This isn't generally a problem for prediction accuracy, but it can make the model more difficult to interpret the results. `Lasso` overcomes this disadvantage and is capable of forcing some of the coefficients to zero granted that $\lambda$ is large enough. Thus, Lasso regression also performs variable selection.
+
+> There is no dominant algorithm present here, in general it is best to test all three techniques introduced so far and chose the one that best suits the data using cross-validated test error estimates.
+
+## Dimension reduction methods
+
+So far, the methods we have discussed have controlled for variance by either using a subset of the original variables, or by shrinking their coefficients toward zero. Now we explore a class of models that __transform__ the predictors and then fit a least squares model using the transformed variables. Dimension reduction reduces the problem of estimating $p$ + 1 coefficients to the simpler problem of $M$ + 1 coefficients, where $M$  < $p$. Two approaches for this task are _principal component regression_ and _partial least squares_.
+
+### Principal components regression (PCA)
+
+One can describe PCA as an approach for deriving a low-dimensional set of features from a large set of variables. The _first_ principal component direction of the data is along which the observations vary the most. In other words, the first PC is a line that fits as close as possible to the data. One can fit $p$ distinct principal components. The second PC is a linear combination of the variables that is uncorrelated with the first PC, and has the largest variance subject to this constraint. It turns out that the 2 PC must be perpendicular to the first PC direction. The idea is that the principal components capture (maximize) the most variance in the data using linear combinations of the data in subsequently orthogonal directions. In this way we can also combine the effects of correlated variables to get more information out of the available data, whereas in regular least squares we would have to discard one of the correlated variables.
+
+In regression, we construct $M$ principal components and then use these components as predictors in a linear regression using least squares. The idea being that we fit a model with a small number of variables (principals) that explain most of the variability in the data, and the most relationship with the response. In general, we have potential to fit better models than ordinary least squares since we can reduce the effect of over fitting. In general, PCR will tend to be better in cases where the first few principal components are sufficient to capture most of the variation in the predictors as well as the relationship with the response.
+
+Note that PCR is _not_ a feature selection method. This is because it is a linear combination of _all_ $p$ original features. Thus PCR is more related to ridge regression than lasso. 
+
+### Partial least squares
+
+The PCR method that we described above involves identifying linear combinations of $X$ that best represent the predictors. These combinations (_directions_) are identified in an unsupervised way, since the response $Y$ is not used to help determine the principal component directions. That is, the response $Y$ does not _supervise_ the identification of the principal components, thus there is no guarantee that the directions that best explain the predictors also are the best for predicting the response (even though that is often assumed). Partial least squares (PLS) are a _supervised_ alternative to PCR. Like PCR, PLS is a dimension reduction method, which first identifies a new smaller set of features that are linear combinations of the original features, then fits a linear model via least squares to the new $M$ features. Yet, unlike PCR, PLS makes use of the response variable in order to identify the new features. 
+
+PLS does this by placing higher weights on the variables that are most strongly related to the response. To attain subsequent direction, the method first adjusts each of the variables for the first component by regressing each variable on the first component and taking the _residuals_. The residuals can be interpreted as the remaining information that has no been explained by the first PLS direction. We then compute the second component in exactly the same way as the first component. This can be iterated $M$ times to identify multiple PLS components.
+
+> In practice PLS performs no better than ridge regression or PCR. This is because even though PLS can reduce bias, it also has potential to increase the variance, so the overall benefit is not really distinct.
+
+## Considerations for high dimensions
+
+Most traditional regression techniques are intended for low-dimensional settings in which $n$ >> $p$. This in part because through most of the fields history, the bulk of the problems requiring statistics have been low dimensional. These days $p$ can be very large, and $n$ is often limited due to cost, availability or other considerations.
+
+In general a dataset is high-dimensional if $p$ > $n$ or if $p$ is slightly smaller than $n$. Classical approaches such as least squares linear regression are not appropriate here.
+
+__So what exactly goes wrong in high dimensional settings?__
+
+We will discuss the problems under the context of linear regression, though the ideas hold true for all classical regression techniques (linear OLS, logistic regression, LDA, ect). 
+
+When $p$ is larger, or almost larger than $n$, the least squares approach will yield a set of coefficient estimates that result in a perfect fit to the data, regardless of whether there is truly a relationship present. The problem is that a perfect fit will almost always lead to over fitting the data. The problem is simply that the least squares regression is _too flexible__ and hence over fits the data. 
+
+> In this scenario, we can actually attain perfect fits to data even when the features are completely unrelated to the response.
+
+Unfortunately, the model fitting parameters $R^2, C_p, AIC$, and $BIC$ approaches are also not effective in a high dimensional setting, even with cross validation, because estimating variance can be problematic.
+
+However, it turns out that many of the methods we have discussed in this notebook for fitting _less flexible_ least squares models (forward stepwise, ridge, lasso, and PCA) are particularly useful for performing regression in high dimensional settings. Essentially, these approaches avoid over fitting by using a less flexible fitting approach than ordinary least squares. 
+
+The general rule for additional dimensions in data is that additional features are only useful if they are truly associated with the response. Otherwise, the addition of noise features will lead to increased test set error and reduce the chance of over fitting.
+
+## Interpreting results in high dimensions
+
+We must always be cautious about the way we report the obtained model results, especially in high dimensional settings. In this setting, the multicollinearity problem is extreme, since any variable in the model can be rewritten as a linear combination of all the other variables in the model. Essentially, we can never know exactly which variables (if any) truly are predictive of the outcome, and we can never identify the best coefficients. In general we should be careful not to overstate the results obtained. We can make it clear the results found were simply one of many possible models for predicting the response, and that it must be validated on independent data sets.
+
+It is also important to be careful when reporting errors and measure of model fit in the high dim. setting. We have seen that we can obtain useless models that have zero residuals when $p$ > $n$, thus we should never use $SSE$, $p$-values, $R^2$, or other traditional measures of fit on the _training_ data. Thus it is imperative to report error and prediction results using a _test_ set, or cross validation errors.
+
+# Code examples
+
+## Subset selection methods
+
+### Best subset selection
+
+Here we apply best subset selection to the `Hitters` dataset from the `ISLR` package. We want to predict a baseball player's `Salary` based on various statistics from the previous year.
+
+
+```{r}
+library(ISLR)
+attach(Hitters)
+names(Hitters)
+dim(Hitters)
+#str(Hitters)
+# Check for NA data
+sum(is.na(Hitters$Salary))/length(Hitters[,1])*100
+```
+
+Turns out that about 18% of the data is missing. For the purpose of this lesson we will just omit missing data.
+
+```{r}
+Hitters <- na.omit(Hitters)
+dim(Hitters)
+```
+
+The `regsubsets()` function of the `leaps` library will perform out best subset selection, where _best_ is quantified using $RSS$.
+
+```{r}
+library(leaps)
+regfit <- regsubsets(Salary ~ ., Hitters)
+summary(regfit)
+```
+
+The useful part of this is the last, a “matrix” indicating which variables are included
+in each of the models. Models are listed in order of size (the first column), and within a
+size, in order of fit (best model first). The included variables are indicated by asterisks in
+quotes; variables not in a model have empty quotes. For example, the best two-variable model contains only the Hits and CRBI. 
+
+An option is available which makes this matrix perhaps more readable: "matrix.logical=TRUE" (the default is FALSE) When this is included in the call of summary, the last part of the output looks as follows:
+
+```{r}
+summary(regfit,matrix.logical=T)
+```
+
+By default `regsubsets()` only reports up to the best eight-variable model. We can adjust this with the `nvmax` parameter.
+
+```{r}
+regfit <- regsubsets(Salary ~ ., data=Hitters, nvmax = 19)
+summary(regfit)$rsq
+```
+
+In this 19 variable model, the $R^2$ increases monotonically as more vaiables are included.
+
+We can use the built in plot functions to plot the RSS, adj. $R^2$, Cp, AIC and BIC. 
+
+```{r fig.retina=2, fig.height=8}
+par(mfrow=c(2,2))
+plot(regfit, scale = 'r2')
+plot(regfit, scale = 'adjr2')
+plot(regfit, scale = 'Cp')
+plot(regfit, scale = 'bic')
+```
+Each row in these graphs represents a model; the shaded rectangles in the columns indicate
+the variables included in the given model. The numbers on the left margin are the values of the performance fit metrics defined before 
+> Note: recall, the measures of fit shown above are (besides R^2) all estimates of test error.
+
+### Forward and backwards stepwise selection
+
+We can also use `regsubsets()` here by specifying the paramter `method` with either `backwards` or `forwards`.
+
+```{r}
+regfit.fwd <- regsubsets(Salary ~.,data=Hitters,nvmax=19, 
+                      method = "forward")
+summary(regfit.fwd)
+regfit.bwd <- regsubsets(Salary ~.,data=Hitters,nvmax=19,
+                      method ="backward")
+summary(regfit.bwd)
+```
+
+We can see here that 1 - 6 variable models are identical for _best subset_ and _forward selection_. However, the best 7 + variable models are different for all three techniques.
+
+> Note: To select the best value of nvmax, we should cross use cross validation.
+
+
+## Ridge regression and Lasso
+
+> Forewarning: ridge and lasso regression are not well explained using the caret package, since it handles a lot of the action automatically.
+
+### Start cross-validation methods
+
+We will be applying cross-validation methods within the Regularization methods as well, rather than isolating them to a single section.
+
+### Validation set
+
+Instead of using adj. $R^2$, $C_p$ and $BIC$ to estimate test error rates, we can use cross-validation approaches. In order for this to work we must only use the training observations to perform all aspects of model fitting and variable selection. The test errors are then computed by applying the training model to the test or _validation_ data. We can split the data into `training` and `testing` sets using the `caret` package. 
+
+```{r}
+library(caret)
+
+split <- createDataPartition(y=Hitters$Salary, p = 0.5, list = FALSE)
+train_set <- Hitters[split,]
+test_set <- Hitters[-split,]
+```
+
+```{r}
+set.seed(825) # for reproducing these results
+
+ridge <- train(Salary ~., data = train_set,
+               method='ridge',
+               lambda = 4,
+               preProcess=c('scale', 'center'))
+ridge
+ridge.pred <- predict(ridge, test_set)
+
+mean(ridge.pred - test_set$Salary)^2
+```
+
+### _k_-folds
+
+Use _k_-folds to select the best lambda. (Even though `caret` uses bootstrap in the example above by default).
+
+For cross-validation, we will split the data into testing and training data
+
+```{r}
+set.seed(825)
+fitControl <- trainControl(method = "cv",
+                            number = 10)
+# Set seq of lambda to test
+lambdaGrid <- expand.grid(lambda = 10^seq(10, -2, length=100))
+                          
+ridge <- train(Salary~., data = train_set,
+              method='ridge',
+              trControl = fitControl,
+#                tuneGrid = lambdaGrid
+              preProcess=c('center', 'scale')
+            )
+
+ridge
+
+# Compute coeff
+predict(ridge$finalModel, type='coef', mode='norm')$coefficients[19,]
+
+ridge.pred <- predict(ridge, test_set)
+sqrt(mean(ridge.pred - test_set$Salary)^2)
+```
+
+So the average error in salary is ~ 33 thousand. You'll notice that the regression coefficients dont really seem like they have shifted towards zero, but that is because we are standardizing the data first.
+
+
+We should now check to see if this is actually any better than a regular `lm()` model.
+
+```{r}
+lmfit <- train(Salary ~., data = train_set,
+               method='lm',
+               trControl = fitControl,
+               preProc=c('scale', 'center'))
+lmfit
+coef(lmfit$finalModel)
+
+lmfit.pred <- predict(lmfit, test_set)
+sqrt(mean(lmfit.pred - test_set$Salary)^2)
+```
+
+
+As we can see this ridge regression fit certainly has lower RMSE and higher $R^2$. We can also see that the ridge regression has indeed _shrunk_ the coefficients, some of them extremely close to zero.
+
+### The Lasso
+
+```{r}
+lasso <- train(Salary ~., train_set,
+               method='lasso',
+               preProc=c('scale','center'),
+              
+               trControl=fitControl)
+lasso
+# Get coef
+predict.enet(lasso$finalModel, type='coefficients', s=lasso$bestTune$fraction, mode='fraction')
+
+lasso.pred <- predict(lasso, test_set)
+sqrt(mean(lasso.pred - test_set$Salary)^2)
+```
+
+Here in the lasso we see that many of the coefficients have been forced to zero. This presents a simplicity advantage over ridge and linear regression models, even though the RMSE is a bit higher than the ridge regression.
+
+## PCR and PLS
+
+### Principal Components Regression
+
+We will show PCR using both the `pls` package, as well as the `caret` package.
+
+```{r}
+library(pls)
+set.seed(2)
+
+#defaults to 10 folds cross validation
+pcr.fit <- pcr(Salary ~., data=train_set, scale=TRUE, validation="CV", ncomp=19)
+summary(pcr.fit)
+
+validationplot(pcr.fit, val.type='MSEP')
+```
+
+This algorithm reports the CV scores as RMSE, and R^2 of the training data. However, we can see from plotting the MSE against the number of components that we achieve the lowest MSE at about 3 components. This suggests a large improvement over a least squares approach because we are able to explain much of the variance using only 3 components, rather than 19.
+
+Let's see how this performs on the test dataset.
+
+```{r}
+pcr.pred <- predict(pcr.fit, test_set, ncomp=3)
+sqrt(mean((pcr.pred - test_set$Salary)^2))
+```
+
+This is comparable, but a bit lower than the RMSE of the ridge/ lasso/linear regression.
+
+__Using the caret package__
+
+```{r}
+pcr.fit <- train(Salary ~., data=train_set,
+                 preProc = c('center', 'scale'),
+                 method='pcr',
+                 trControl=fitControl)
+pcr.fit
+```
+
+The caret package, using bootstrapping and 10 fold cv choses the best model @ 2 components
+
+```{r}
+pcr.pred <- predict(pcr.fit, test_set)
+sqrt(mean(pcr.pred - test_set$Salary)^2)
+```
+
+The results are comparable to lasso regression. However, PCR results are not easily interpretable.
+
+### Partial Least Squares
+
+```{r}
+pls.fit <- plsr(Salary~., data=train_set, scale=TRUE, validation="CV")
+summary(pls.fit)
+validationplot(pls.fit, val.type='MSEP')
+```
+
+Here the best $M$ (number of components) is 2. Now we evaluate the corresponding test error.
+
+```{r}
+pls.pred <- predict(pls.fit, test_set, ncomp=2)
+sqrt(mean(pls.pred - test_set$Salary)^2)
+```
+
+Here we see a mild improvment in RMSE compared to PCR. This is probably due to the fact that the component directions are estimated based on the predictors and and response.
