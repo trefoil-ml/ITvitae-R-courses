@@ -1,0 +1,142 @@
+---
+title: "ML Algorithms for classification"
+subtitle: "Exercises and solutions decision trees"
+venue: "ITViate data science courses"
+author: "Hicham Zmarrou"
+date: "Notebook -- <http://bit.ly/2q9NPSU>  <br /> <br />"
+output:
+  html_notebook:
+    highlight: pygments
+    theme: cosmo
+    toc: true
+    toc_float: true
+    number_sections: FALSE
+---
+
+
+<hr>
+
+[Visit my website](http://trefoil.ml/) for more like this!
+
+__References__
+
+Most of this material is borrowed from:
+
+* Textbook: [Introduction to statistical learning](http://www-bcf.usc.edu/~gareth/ISL/)
+
+Chapter 6 page 262-269
+
+
+______________________________________________________________________________________________________________________________________
+
+  
+## Decision trees
+
+1. Read the pre-processed titanic data set using the `read_and_prepare_titanic_dataset.R` function. 
+
+```{r}
+library(tidyverse)
+library(caret)
+source("read_and_prepare_titanic_dataset.R")
+clean_titanic <- read_and_prepare_titanic_dataset("./data/titanic3.csv")
+
+```
+
+
+2. Create a train and a test data set
+
+```{r}
+set.seed(1)
+n      = nrow(clean_titanic)
+idx    = sample(n, size = trunc(0.70 * n))
+titanic_train = clean_titanic[idx, ]
+nlearn = length(titanic_train) 
+titanic_test = clean_titanic[-idx, ]
+ntest  = n - nlearn
+```
+
+
+
+3. Create your first decision tree using the formuala 
+
+    `survived~pclass+sex+age+sibsp+parch+fare+embarked_C+embarked_Q+child+mother` 
+
+you'll make use of R's `rpart` package. 
+    
+    Inside rpart, there is the `rpart()` function to build your first decision tree. The function takes multiple arguments:
+
+   * formula: specifying variable of interest, and the variables used for prediction (e.g. formula = Survived ~ Sex + Age).
+      
+   * data: The data set to build the decision tree (here titanic_train).
+      
+   * method: Type of prediction you want. We want to predict a categorical variable, so classification: method = "class".
+   
+   * call the help function to see more parameters for this function especially the `rpart.control` parameter. 
+
+```{r}
+# install.packages('rattle')
+# install.packages('rpart.plot')
+# install.packages('RColorBrewer')
+ library(rattle)
+ library(rpart.plot)
+ library(RColorBrewer)
+ formula1    <- as.formula("survived~pclass+sex+age+sibsp+parch+fare+embarked_C+embarked_Q+child+mother") 
+ dtmodel01   <- rpart(formula = formula1, data=titanic_train, method="class" , control = rpart.control(cp=0.005, xval=10, maxdepth=15))
+ dtmodel01
+ 
+```
+
+
+4. Visualize resulting tree, you can use rattle, rpart.plot, and RColorBrewer and the `fancyRpartPlot`
+
+
+```{r}
+fancyRpartPlot(dtmodel01)
+```
+
+5. Try different parameters for the `rpart.control` input. Find the best value of $cp$ and prune the tree using this $cp$
+
+6. Calculate error rate in the learning sample
+
+ * Training set   
+
+```{r}
+
+pred_train = predict(dtmodel01, titanic_train, type = "class")
+ 
+(train_tab = table(predicted = pred_train, actual = titanic_train$survived))
+
+cm_train_dt1 = confusionMatrix(train_tab)
+c(cm_train_dt1$overall["Accuracy"], 
+  cm_train_dt1$byClass["Sensitivity"], 
+  cm_train_dt1$byClass["Specificity"])
+
+```
+
+ * Testing set  
+
+ 
+ 
+```{r}
+
+pred_test = predict(dtmodel01, titanic_test, type = "class")
+ 
+(test_tab = table(predicted = pred_test, actual = titanic_test$survived))
+
+cm_test_dt1 = confusionMatrix(test_tab)
+c(cm_test_dt1$overall["Accuracy"], 
+  cm_test_dt1$byClass["Sensitivity"], 
+  cm_test_dt1$byClass["Specificity"])
+```
+
+
+7. Compare the results with the results from the logistic regresion  
+
+
+
+
+
+
+
+
+

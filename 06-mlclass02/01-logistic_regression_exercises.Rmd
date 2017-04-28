@@ -1,0 +1,323 @@
+---
+title: "ML Algorithms for classification"
+subtitle: "Exercises and solutions Logistic regression"
+venue: "ITViate data science courses"
+author: "Hicham Zmarrou"
+date: "Notebook -- <http://bit.ly/2q9NPSU>  <br /> <br />"
+output:
+  html_notebook:
+    highlight: pygments
+    theme: cosmo
+    toc: true
+    toc_float: true
+    number_sections: FALSE
+---
+
+
+<hr>
+
+[Visit my website](http://trefoil.ml/) for more like this!
+
+__References__
+
+Most of this material is borrowed from:
+
+* Textbook: [Introduction to statistical learning](http://www-bcf.usc.edu/~gareth/ISL/)
+
+Chapter 6 page 262-269
+
+
+______________________________________________________________________________________________________________________________________
+
+The sinking of the Titanic is one of the most infamous shipwrecks in history.  On April 15, 1912, during her maiden voyage, the Titanic sank after colliding with an iceberg, killing 1502 out of 2224 passengers and crew. This sensational tragedy shocked the international community and led to better safety regulations for ships.
+
+One of the reasons that the shipwreck led to such loss of life was that there were not enough lifeboats for the passengers and crew. Although there was some element of luck involved in surviving the sinking, some groups of people were more likely to survive than others, such as women, children, and the upper-class.
+
+In this exercise, we ask you to complete the analysis of what sorts of people were likely to survive. In particular, we ask you to apply the tools of machine learning to predict which passengers survived the tragedy.
+
+## Logistic regression 
+
+### read and prepare en engineer features
+
+Write a function that read and clean the titanic dataset. The function returns a data frame "cleanTitanic.csv"  
+     
+  1. Remove insignificant variables (PassengerID, Ticket number, Cabin (77% missing)). 
+          
+  2. Convert categorical variables from characters structures to factors structure.
+          
+  3. Rename every person by his/her title only.
+          
+  4. Repalce missing values for th age variable by the mean of the age of the group ("Mr", "Miss", "Master", etc) average
+          
+  5. Create a new variable called "child": children had higher chance of survival (1 if age<=12, 0 otherwise):  
+          
+  6. Create a new variable called "mother": mothers (name == "Miss" & "parch > 0") had a higher chance of survival (family = sibsp + parch) 
+  
+      
+```{r}
+library(tidyverse)
+source("read_and_prepare_titanic_dataset.R")
+clean_titanic <- read_and_prepare_titanic_dataset("./data/titanic3.csv")
+# require(titanic)
+```
+   
+
+### Extra notes
+
+  * __pclass:__ is a proxy for socio-economic status (SES) 1st ~ Upper; 2nd ~ Middle; 3rd ~ Lower
+      
+  * __age:__ is in Years; Fractional if age less than One (1) If the Age is Estimated, it is in the form xx.5
+      
+      
+     With respect to the family relation variables (i.e. sibsp and parch) some relations were ignored. The following are the definitions used for sibsp and parch.
+      
+      
+  * __sibling:__ Brother, Sister, Stepbrother, or Stepsister of Passenger Aboard Titanic
+      
+  * __spouse:__ Husband or Wife of Passenger Aboard Titanic (Mistresses and Fiances Ignored)
+      
+  * __parent:__ Mother or Father of Passenger Aboard Titanic
+      
+  * __child:__ Son, Daughter, Stepson, or Stepdaughter of Passenger Aboard Titanic
+      
+      Other family relatives excluded from this study include cousins, nephews/nieces, aunts/uncles, and in-laws. Some children traveled only with a nanny, therefore parch=0 for them. As well, some traveled with very close friends or 
+       
+### Explore the data by plotting 
+        
+  1. plotting survival rate by gender; 
+     
+  2. Calculating the overall survival rate, the female and male survival rate;
+  
+  3. Claculate the survival rate per class
+  
+```{r}
+
+prop.table(table(clean_titanic$survived))
+```
+38% of passengers survived the disaster.
+
+```{r}
+(counts <- table(clean_titanic$survived, clean_titanic$sex))
+```
+
+Plot
+
+```{r}
+barplot(counts, xlab = "Gender", ylab = "Number of People", main = "survived and deceased per gender")
+```
+  
+
+*  Claculate the survival rate per class
+    
+    
+    
+```{r}
+(pclass_survival <- table(clean_titanic$survived, clean_titanic$pclass))
+
+barplot(pclass_survival, xlab = "Cabin Class", ylab = "Number of People", main = "survived and deceased per class")
+
+pclass_survival[2]/(pclass_survival[1] + pclass_survival[2])  #1st Class Survival Rate
+pclass_survival[4]/(pclass_survival[3] + pclass_survival[4])    #2nd Class Survival Rate
+pclass_survival[6]/(pclass_survival[5] + pclass_survival[6])  #3rd Class Survival Rate
+
+```
+
+
+### Build a logistic model  
+
+This first data exploration allows us already to get first insight about which sorts of people were likely to survive. We may continous exploring other subsets and subsets that go more deeper but that would take a lot of time; handswork and crafts.    
+
+1. create a logistic model on a training set and interpret the results  
+
+
+```{r}
+set.seed(1)
+n      = nrow(clean_titanic)
+idx    = sample(n, size = trunc(0.70 * n))
+titanic_train = clean_titanic[idx, ]
+titanic_test = clean_titanic[-idx, ]
+
+formula1 <- as.formula("survived~pclass+sex+age+sibsp+parch+fare+embarked_C+embarked_Q+child+mother+sex*pclass")
+
+lgreg  <- glm(formula = formula1, family = binomial, data =titanic_train)
+summary(lgreg)
+
+```
+
+2. Make Predictions using the test Set
+
+```{r}
+p.hats   <- predict.glm(lgreg, newdata = titanic_test, type = "response")
+survival <- ifelse(p.hats > 0.5, 1, 0)
+```
+
+3. Use the `table` and `ConfusionMatrix()` function from the `caret` package
+ to calculate the _accuracy_; _sensitivity_ and the _specificity_ of the model 
+
+```{r}
+m_table = table(predicted = survival, actual = titanic_test$survived)
+library(caret)
+cm_lgreg = confusionMatrix(m_table)
+c(cm_lgreg$overall["Accuracy"], 
+  cm_lgreg$byClass["Sensitivity"], 
+  cm_lgreg$byClass["Specificity"])
+```
+
+
+In the following exercise we try to improve the performance of the model using what we have learned the previous lesson. 
+
+4. Use the package `leaps` and the `regsubsets` the best susbsets of predictors.
+
+```{r}
+library(leaps)
+regfit.full = regsubsets(survived ~ pclass+sex+age+sibsp+parch+fare+embarked_C+embarked_Q+child+mother+ sex*pclass, data =titanic_train, nvmax = 15)  #Best Subset Selection for ALL variables
+(reg.summary = summary(regfit.full))
+names(reg.summary)
+```
+
+5. Plot RSS, adjusted r-square, Cp, BIC for all the models at once and find which model has a maximal adjusted $R^2$ (`which.max`)
+
+```{r}
+par(mfrow = c(2, 2))
+# RSS Plot
+plot(reg.summary$rss, xlab = "Number of Variables", ylab = "RSS", type = "l")
+# Adjusted RSq plot
+plot(reg.summary$adjr2, xlab = "Number of Variables", ylab = "Adjusted R^2", 
+    type = "l")
+which.max(reg.summary$adjr2)
+points(10, reg.summary$adjr2[9], col = "red", cex = 2, pch = 20)
+# Cp plot
+plot(reg.summary$cp, xlab = "Number of Variables", ylab = "Cp", type = "l")
+which.min(reg.summary$cp)
+
+
+points(10, reg.summary$cp[10], col = "red", cex = 2, pch = 20)
+# BIC plot
+plot(reg.summary$bic, xlab = "Number of Variables", ylab = "BIC", type = "l")
+points(6, reg.summary$bic[6], col = "red", cex = 2, pch = 20)
+```
+
+5. extract  the Coefficients for these 2  best subsets  `coef(regfit.full,...)`
+
+ 
+```{r}
+
+coef(regfit.full, 10)
+
+coef(regfit.full, 6)
+
+```
+
+6. Now fit two models: One with 10 predictor and one with 6 predictors to see which gives better prediction accuracy.  
+  
+
+```{r}
+
+lgreg10 <- glm(survived ~ pclass + sex + age + sibsp + parch + embarked_C+embarked_Q+ mother+child + mother + pclass*sex, family = binomial, data = titanic_train)
+
+lgreg06 <- glm(survived ~ pclass + sex + age + sibsp +embarked_C + pclass*sex, family = binomial, data = titanic_train)
+
+
+```
+
+7.  Make Predictions using the test Set
+
+```{r}
+
+p.hats10   =  predict.glm(lgreg10, newdata = titanic_test, type = "response")
+survival10 = ifelse(p.hats10 > 0.5, 1, 0)
+
+m_table10 = table(predicted = survival10, actual = titanic_test$survived)
+cm_lgreg10 = confusionMatrix(m_table10)
+c(cm_lgreg10$overall["Accuracy"], 
+  cm_lgreg10$byClass["Sensitivity"], 
+  cm_lgreg10$byClass["Specificity"])
+
+
+
+######### 06 predictors 
+p.hats06    = predict.glm(lgreg06, newdata = titanic_test, type = "response")
+survival06 = ifelse(p.hats06 > 0.5, 1, 0)
+m_table06 = table(predicted = survival06, actual = titanic_test$survived)
+cm_lgreg06 = confusionMatrix(m_table06)
+c(cm_lgreg06$overall["Accuracy"], 
+  cm_lgreg06$byClass["Sensitivity"], 
+  cm_lgreg06$byClass["Specificity"])
+
+```
+
+
+
+
+```{r}
+
+```
+
+## Decision trees
+
+1. Create your first decision tree using "formula1", you'll make use of R's `rpart` package. 
+    
+    + Inside rpart, there is the `rpart()` function to build your first decision tree. The function takes multiple arguments:
+
+      * formula: specifying variable of interest, and the variables used for prediction (e.g. formula = Survived ~ Sex + Age).
+      
+      * data: The data set to build the decision tree (here titanic_train).
+      
+      * method: Type of prediction you want. We want to predict a categorical variable, so classification: method = "class".
+        
+        
+Your call could look like this: ```my_tree <- rpart(survived ~ sex + age, data = titanic_train, method ="class")```
+
+```{r}
+
+# install.packages('rattle')
+# install.packages('rpart.plot')
+# install.packages('RColorBrewer')
+ library(rattle)
+ library(rpart.plot)
+ library(RColorBrewer)
+ dtmodel01   <- rpart(formula = formula1, data=titanic_train, method="class", control = rpart.control(cp=0.02, xval=0, maxdepth=15))
+ dtmodel01
+ 
+```
+
+Visualize resulting tree, you can use the plot(dtmodel01) and text(dtmodel01). 
+
+```{r}
+plot(dtmodel01)
+
+text(dtmodel01)
+
+title(main = "Unpruned Classification Tree")
+
+```
+
+The resutling graphs will not be that informative, but R has packages to make it all fancier: rattle, rpart.plot, and RColorBrewer.
+
+3. plot the resulting tree using the `fancyRpartPlot`
+
+```{r}
+fancyRpartPlot(dtmodel01)
+
+```
+
+
+4. 
+```{r}
+
+formula2    <- as.formula("survived ~ pclass+sex+age+sibsp+parch+fare+embarked+child+mother")
+dtmodel02   <- rpart(formula = formula2, data=titanic_train, method="class")
+p3          <- predict(dtmodel02, titanic_test, type= "class")
+
+cmdt2       <- confusionMatrix(p3, titanic_test$survived)
+
+
+c(cmdt2$overall["Accuracy"], 
+  cmdt2$byClass["Sensitivity"], 
+  cmdt2$byClass["Specificity"])
+fancyRpartPlot(dtmodel02)
+
+```
+
+
+
