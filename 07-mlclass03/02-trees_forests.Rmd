@@ -1,0 +1,531 @@
+---
+title: "ML Algorithms for classification"
+author: "Hicham Zmarrou"
+date: "Slides -- <http://bit.ly/2q9NPSU>  <br /> <br />"
+output:
+  ioslides_presentation:
+    standalone: no
+    transition: default
+    widescreen: yes
+  slidy_presentation: default
+recording: none
+subtitle: Trees and Forests
+css: styles.css
+type: invited
+venue: ITViate data science courses
+---
+
+
+```{r setup, echo = FALSE}
+knitr::opts_chunk$set(
+  message = FALSE,
+  fig.width = 10,
+  fig.height = 4,
+  comment = "#>",
+  collapse = TRUE,
+  warning = FALSE
+)
+```
+
+
+        
+        
+## Aims of this lesson 
+
++ Understand what are  decision trees and random forests , how they works, and how to evaluate  a DT or a RF model.
+
++ Decision tree is a type of supervised learning algorithm (having a pre-defined target variable)  mostly used in classification problems. 
+
++ It works for both categorical and continuous input and output variables. 
+
++ In this technique, we split the population or sample into two or more homogeneous sets (or sub-populations) based on most significant splitter / differentiator in input variables.
+
+# Decision trees
+
+##  Example  
+
+<div align="center">
+  <img src="img/play_tennis_1.png" /> 
+</div>
+
+
+## Example 
+
+<div align="center">
+  <img src="img/play_tennis_2.png" /> 
+</div>
+
+## Example 
+
+<div align="center">
+  <img src="img/play_tennis_03.png" /> 
+</div>
+
+## Example 
+
+<div align="center">
+  <img src="img/play_tennis_04.png" /> 
+</div>
+
+
+## Example 
+
+<div align="center">
+  <img src="img/play_tennis_04-2.png" /> 
+</div>
+
+## Example 
+
+<div align="center">
+  <img src="img/play_tennis_05.png" /> 
+</div>
+
+
+
+## Types of decision trees
+
++ __Classification decision tree:__ Decision trees which have categorical target variable
+
+    + Models suitable for answering questions: Which category(ies)  
+
+
++ __Regression trees:__ decision trees that have continuous target variable 
+
+    + Models suitable for answering questions: How mach, how many 
+     
+##  Terminology related to decision trees
+ 
+1. __Root Node:__ It represents entire population or sample and this further gets divided into two or more homogeneous sets.
+
+2. __Splitting:__ It is a process of dividing a node into two or more sub-nodes.
+
+3. __Decision Node:__ When a sub-node splits into further sub-nodes, then it is called decision node.
+
+4. __Leaf/ Terminal Node:__ Nodes do not split is called Leaf or Terminal node.
+
+5. __Pruning:__ When we remove sub-nodes of a decision node, this process is called pruning. You can say opposite process of splitting.
+
+6. __Branch / Sub-Tree:__ A sub section of entire tree is called branch or sub-tree.
+
+7. __Parent and Child Node:__ A node, which is divided into sub-nodes is called parent node of sub-nodes where as sub-nodes are the child of parent node.
+
+
+##  Terminology related to decision trees
+<div align="center">
+  <img src="img/terminology.png" /> 
+</div>
+
+## Advantages & disadvantages
+
+### Advantages 
+
+
++ Easy to Understand:
+
++ Useful in data exploration: 
+
++ Less data cleaning required.
+
++ Data type is not a constraint.
+
++ Non parametric method.
+
+
+### Disadvantages
+
++ Over fitting
+
++ Not fit for continuous variables
+
+
+## How does a tree decide where to split?
+
+<div align="center">
+  <img src="img/entropy1.png" /> 
+</div>
+
+
+## How does a tree decide where to split?
+
+<div align="center">
+  <img src="img/entropy2.png" /> 
+</div>
+
+## How does a tree decide where to split?
+
+<div align="center">
+  <img src="img/entropy3.png" /> 
+</div>
+
+## How does a tree decide where to split?
+
+<div align="center">
+  <img src="img/entropy4.png" /> 
+</div>
+
+## How does a tree decide where to split?
+
+<div align="center">
+  <img src="img/entropy5.png" /> 
+</div>
+
+## How does a tree decide where to split?
+
+<div align="center">
+  <img src="img/entropy6.png" /> 
+</div>
+
+## How does a tree decide where to split?
+
+<div align="center">
+  <img src="img/entropy7.png" /> 
+</div>
+
+## How does a tree decide where to split?
+
+<div align="center">
+  <img src="img/entropy8.png" /> 
+</div>
+
+## How does a tree decide where to split?
+
+<div align="center">
+  <img src="img/entropy9.png" /> 
+</div>
+
+## How does a tree decide where to split?
+
+<div align="center">
+  <img src="img/entropy10.png" /> 
+</div>
+
+
+## How does a tree decide where to split?
+
+<div align="center">
+  <img src="img/entropy11.png" /> 
+</div>
+
+## How does a tree decide where to split?
+
+<div align="center">
+  <img src="img/entropy12.png" /> 
+</div>
+
+## How does a tree decide where to split?
+
+<div align="center">
+  <img src="img/entropy1.png" /> 
+</div>
+
+
+## How does a tree decide where to split?
+
+<div align="center">
+  <img src="img/entropy13.png" /> 
+</div>
+
+## How does a tree decide where to split?
+
+<div align="center">
+  <img src="img/entropy14.png" /> 
+</div>
+
+## How does a tree decide where to split?
+
+<div align="center">
+  <img src="img/entropy15.png" /> 
+</div>
+
+## How does a tree decide where to split?
+
+<div align="center">
+  <img src="img/entropy16.png" /> 
+</div>
+
+
+## How does a tree decide where to split?
+
+<div align="center">
+  <img src="img/entropy17.png" /> 
+</div>
+
+
+## How does a tree decide where to split?
+
+<div align="center">
+  <img src="img/entropy18.png" /> 
+</div>
+
+
+## key parameters of tree modeling
+
++ Overfitting is one of the key challenges faced while modeling decision trees. 
+
++ If no limit set,  tree give you 100% accuracy on training set
+
++ Preventing overfitting is essential in fitting  a decision tree and it can be done in 2 ways:
+
+    * Setting constraints on tree size
+    * Tree pruning
+
+## Setting constraints on tree size
+
+<div align="center">
+  <img src="img/tree-size.png" width="1000" height="480" /> 
+</div>
+
+
+## Setting constraints on tree size
+
+1. Minimum samples for a node split (`min_samples_split`)
+
+    + Control over-fitting. Should be tuned using CV.
+
+2. Minimum samples for a terminal node (leaf)
+
+    + Control over-fitting similar to min_samples_split.
+
+3. Maximum depth of tree (vertical depth, `max_depth`)
+
+    + Control over-fitting Should be tuned using CV
+    
+4. Maximum number of terminal nodes
+    
+    + Can be defined in place of `max_depth`. In a binary tree, a depth of 'n' would produce a maximum of $2^{n+1} -1$ leaves.
+
+5. Maximum features to consider for split
+
+## Tree pruning
+<div align="center">
+  <img src="img/trucks.png" width="80%" height="80%"/> 
+</div>
+
+1. A lane with cars moving at 80km/h
+2. A lane with trucks moving at 30km/h
+
+At this instant, you are the yellow car and you have 2 choices:
+
+1. Take a left and overtake the other 2 cars quickly
+2. Keep moving in the present lane
+
+
+## Tree pruning
+
+1. Make the decision tree to a large depth.
+
+2. Start at the bottom and start removing leaves which are giving us negative IG when compared from the top.
+
+
+Suppose a split is giving us a gain of say -10 (loss of 10) and then the next split on that gives us a gain of 20. A simple decision tree will stop at step 1 but in pruning, we will see that the overall gain is +10 and keep both leaves.
+
+
+
+## Are tree based models better than logistic  models?
+
++ If the relationship between dependent & independent variable is well approximated by a linear model, linear regression will outperform tree based model.
+
++ If there is a high non-linearity & complex relationship between dependent & independent variables, a tree model will outperform a classical regression method.
+
++ If you need to build a model which is easy to explain to people, a decision tree model will always do better than a linear model. Decision tree models are even simpler to interpret than linear regression!
+
+## Working with decision trees in R
+
+```{r }
+library(rpart)
+set.seed(9850) 
+idxr  <- runif(nrow(iris))
+irisr <-iris[order(idxr),]
+miris <- rpart(Species ~., data = irisr[1:100,],control = rpart.control(cp=0.005, xval=10, maxdepth=5))
+miris
+
+```
+
+$cp$ is the complexity parameter, see `help(rpart.control)` 
+
+
+## how to read the output?
+
+node), split, n, loss, yval, (yprob)
+
+1.  node): indicates the node number; 2.  split: indicates the split criterion
+
+3.  n: indicates the number of individuals in the groupe
+
+4.  loss: indicates the the number of individuals misclassified
+
+5.   yval: indicates the predicted value
+
+6.  (yprob): indicates the probability of belonging to each class    
+    
+
+
+__Note:__ when you fit a tree using `rpart`, the fitting routine automatically  performs `10-fold CV` and stores the errors for later use  (such as for pruning the tree)
+
+
+## how to read the output?
+
+
+```{r}
+library(rpart.plot)
+rpart.plot(miris)
+
+```
+
+
+## how to read the output?
+
+```{r}
+
+rpart.plot(miris, type = 3)
+
+```
+
+## how to read the output?
+
+```{r}
+library(rattle)
+library(RColorBrewer)
+fancyRpartPlot(miris)
+
+```
+
+## how to read the output?
+
+```{r}
+summary(miris)
+```
+
+## Use the model to predict the class/category of new data 
+
+```{r}
+piris <- predict(miris, irisr[101:150,], type = "class")
+table(irisr[101:150,5],piris)
+```
+
+## Tuning the parameters   
+
+```{r}
+plotcp(miris)
+min_cp = miris$cptable[which.min(miris$cptable[,"xerror"]),"CP"] # find best value of $cp$
+min_cp
+
+```
+
+
+## Prune the tree using complexity parameter
+
+```{r}
+# prunce tree using best cp
+miris_prune = prune(miris, cp = min_cp)
+
+rpart.plot(miris_prune)
+```
+
+# Ensemble methods - Random Forests 
+
+## What are ensemble methods in tree based modeling ?
+
+__en-sem-ble__
+
+A unit or group of complementary parts that contribute to a single effect, especially:
+
+ * A coordinated outfit or costume.
+
+ * A coordinated set of furniture.
+
+ * A group of musicians, singers, dancers, or actors who perform together
+
+## Bootstrapping
+
+<div align="center">
+  <img src="img/bootstrap.png" /> 
+</div>
+
+
+## What is bagging? how does it work?
+
+  1.  __Create multiple data sets through bootstrapping:__
+
+    Sampling is done with replacement on the original data and new datasets are formed.
+    The new data sets can have a fraction of the columns as well as rows, which are generally hyper-parameters in a bagging model
+    Taking row and column fractions less than 1 helps in making robust models, less prone to overfitting
+
+  2. __Build multiple classifiers:__
+
+    Classifiers are built on each data set.
+    Generally the same classifier is modeled on each data set and predictions are made.
+
+  3. __Combine classifiers:__
+
+    The predictions of all the classifiers are combined using a mean, median or mode value depending on the problem at hand. The combined values are generally more robust than a single model.
+
+
+## What is bagging? how does it work?
+
+
+<div align="center">
+  <img src="img/bagging.png" /> 
+</div>
+
+## Bagging the heart data
+
+<div align="center">
+  <img src="img/bagging_heart_data.png" /> 
+</div>
+
+## Out-of-Bag error estimation
+
+* It turns out that there is a very straightforward way to estimate the test error of a bagged model.
+
+* Recall that the key to bagging is that trees are repeatedly fit to bootstrapped subsets of the observations. One can
+show that on average, each bagged tree makes use of around two-thirds of the observations.
+
+* The remaining one-third of the observations not used to fit a given bagged tree are referred to as the out-of-bag (OOB) observations.
+
+* We can predict the response for the _ith_ observation using each of the trees in which that observation was OOB. This will yield around $B/3$ predictions for the _ith_ observation, which we average.
+
+* This estimate is essentially the LOO cross-validation error for bagging, if $B$ is large.
+
+
+## What is Random Forest ? How does it work?
+
+  1. Assume number of cases in the training set is $N$. Then, sample of these $N$ cases is taken at random but with replacement. This sample will be the training set for growing the tree.
+
+  2. If there are $M$ input variables, a number $m<M$ is specified such that at each node, $m$ variables are selected at random out of the $M$. The best split on these $m$ is used to split the node. The value of $m$ is held constant while we grow the forest.
+  
+  3. Each tree is grown to the largest extent possible and there is no pruning.
+  Predict new data by aggregating the predictions of the ntree trees (i.e., majority votes for classification, average for regression).
+
+
+## What is Random Forest ? How does it work?
+
+
+<div align="center">
+  <img src="img/random_forest.jpg" width="60%" height="60%" /> 
+</div>
+
+
+
+## Advantages of Random Forest
+
+
+1. Random forest can solve both type of problems i.e. classification and regression and does a decent estimation at both fronts.
+
+2. Random forest  can handle large data set with higher dimensionality. Further, RF models output Importance of variable, which can be a very usefull feature (on some random data set).
+
+3. Computation of the out-of-bag error estimate removes the need for a set aside test set.
+
+
+## References 
+
+[An Introduction to Recursive Partitioning Using the rpart Routines](http://bit.ly/2oQiao8) - Details of the rpart package.
+rpart.plot Package - Detailed manual on plotting with rpart using the rpart.plot package.
+
+# Thank you!
+
+* Slides:  <http://bit.ly/2q9NPSU>
+* GitHub:  <https://github.com/trefoil-ml>
+* Twitter: <https://twitter.com/trefoilML>
+* Email:   info@tridata.nl  or hzmarrou@gmail.com
+
