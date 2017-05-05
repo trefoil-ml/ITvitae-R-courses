@@ -1,0 +1,507 @@
+---
+title: "ML Algorithms for clustring"
+subtitle: "Exercises and solutions"
+venue: "ITViate data science courses"
+author: "Hicham Zmarrou"
+date: "Notebook -- <http://bit.ly/2q9NPSU>  <br /> <br />"
+output:
+  html_notebook:
+    highlight: pygments
+    theme: cosmo
+    toc: true
+    toc_float: true
+    number_sections: FALSE
+---
+
+
+<hr>
+
+[Visit my website](http://trefoil.ml/) for more like this!
+
+__References__
+
+Most of this material is borrowed from:
+
+* Textbook: [Practical Guide to Cluster Analysis in R](http://www.sthda.com)
+
+______________________________________________________________________________________________________________________________________
+
+  
+## K-means
+
+We'll use the built-in R dataset USArrest which contains statistics, in arrests per 100,000 residents for assault, murder, and rape in each of the 50 US states in 1973. It includes also the percent of the population living in urban areas.
+
+It contains 50 observations on 4 variables:
+
+* [,1] Murder numeric Murder arrests (per 100,000)
+* [,2] Assault numeric Assault arrests (per 100,000)
+* [,3] UrbanPop numeric Percent urban population
+* [,4] Rape numeric Rape arrests (per 100,000)
+
+1. Load the `USArrests` data set, remove any missing value (i.e, NA values for not available) that might be present in the dat, View the firt 6 
+
+```{r}
+# Load the data set
+data("USArrests")
+# Remove any missing value (i.e, NA values for not available)
+# That might be present in the data
+df <- na.omit(USArrests)
+# View the firt 6 rows of the data
+head(df, n = 6)
+
+```
+
+
+2. Before k-means clustering, compute `min`, `median`, `mean`, `sd` and `max` over all the states 
+
+
+Note that the variables have a large different means and variances. This is explained by the fact that the variables are measured in different units; Murder, Rape, and Assault are measured as the number of occurrences per 100 000 people, and UrbanPop is the percentage of the state's population that lives in an urban area.
+
+They must be standardized (i.e., scaled) to make them comparable. Recall that, standardization consists of transforming the variables such that they have mean zero and standard deviation one. You may want read more about standardization in the following article: [distance measures and scaling](http://bit.ly/1i7vgdY).
+
+```{r}
+desc_stats <- data.frame(
+  Min = apply(df, 2, min), # minimum
+  Med = apply(df, 2, median), # median
+  Mean = apply(df, 2, mean), # mean
+  SD = apply(df, 2, sd), # Standard deviation
+  Max = apply(df, 2, max) # Maximum
+  )
+desc_stats <- round(desc_stats, 1)
+head(desc_stats)
+
+```
+
+
+3. As we don't want the k-means algorithm to depend to an arbitrary variable unit, start by scaling the data using the R function `scale()`
+
+```{r}
+df <- scale(df)
+head(df)
+```
+
+
+4. Use the `fviz_nbclust()` in `factoextra` package to extract the optimal number of clusters   
+
+
+```{r}
+library(factoextra)
+set.seed(123)
+fviz_nbclust(df, kmeans, method = "wss") +
+    geom_vline(xintercept = 4, linetype = 2)
+
+```
+
+
+5. compute the k-means clustering with the suggested number of clusters
+
+```{r}
+# Compute k-means clustering with k = 4
+set.seed(123)
+km.res <- kmeans(df, 4, nstart = 25)
+print(km.res)
+
+```
+
+6. Reaf the help of the function `fviz_cluster` in `factoextra` package and use it to plot the the result of th clustering.
+
+```{r}
+fviz_cluster(km.res, data = df)
+```
+
+
+## K-medoids
+
+
+1. Load the `cluster` package, the `USArrests` package, scale the data and compute pam with k = 4
+
+```{r}
+library("cluster")
+# Load data
+data("USArrests")
+# Scale the data and compute pam with k = 4
+pam.res <- pam(scale(USArrests), 4)
+```
+
+
+
+2. The function pam() returns an object of class pam which components include:
+
+* medoids: Objects that represent clusters
+* clustering: a vector containing the cluster number of each object
+
+extract the cluster medoids using the  `pam.res$medoids` attribute
+
+```{r}
+pam.res$medoids
+```
+
+3. Extract clustering vectors
+
+
+```{r}
+head(pam.res$cluster,20)
+```
+
+
+
+4. The result can be plotted using the function `fviz_cluster`, try also the function  `clusplot()` [in cluster package] as follow:
+
+```{r}
+fviz_cluster(pam.res)
+clusplot(pam.res, main = "Cluster plot, k = 4", 
+         color = TRUE)
+```
+
+
+## DBSCAN 
+
+1. Load the `multishapes` data  and make sure taht `fpc`;`dbscan` and `factoextra` are loaded. 
+
+```{r}
+# Load the data 
+# Make sure that the package factoextra is installed
+data("multishapes", package = "factoextra")
+df <- multishapes[, 1:2]
+```
+
+2. The function `dbscan()` to clustwer the data and plot the results 
+
+
+```{r}
+library("fpc")
+# Compute DBSCAN using fpc package
+set.seed(123)
+db <- fpc::dbscan(df, eps = 0.15, MinPts = 5)
+# Plot DBSCAN results
+plot.dbscan(db, df, main = "DBSCAN", frame = FALSE)
+
+```
+
+Note that, the function `plot.dbscan()` uses different point symbols for core points (i.e, seed points) and border points. Black points correspond to outliers. You can play with eps and MinPts for changing cluster configurations.
+
+3. Compare k-means and DBSCAN algorithms and conclude for this data set.
+
+4. plot the result of the DBSCAN clustering using the `fviz_cluster` function from the `factoextra` package 
+
+
+```{r}
+library("factoextra")
+fviz_cluster(db, df, stand = FALSE, ellipse = TRUE, geom = "point")
+```
+
+5. print the results of `fpc::dbscan()`
+
+```{r}
+# Print DBSCAN
+print(db)
+```
+
+Try to read the table
+
+```
+In the table above, column names are cluster number. Cluster 0 corresponds to outliers (black points in the DBSCAN plot).
+
+``` 
+
+6. Print the cluster membership using tje `$cluster` attribute 
+
+```{r}
+# Cluster membership. Noise/outlier observations are coded as 0
+# A random subset is shown
+db$cluster[sample(1:1089, 50)]
+
+```
+
+
+```
+The function print.dbscan() shows a statistic of the number of points belonging to the clusters that are seeds and border points.
+```
+
+DBSCAN algorithm requires users to specify the optimal `eps` values and the parameter `MinPts`. In the R code above, we used eps = 0.15 and MinPts = 5. One limitation of DBSCAN is that it is sensitive to the choice of eps, in particular if clusters have different densities. If eps is too small, sparser clusters will be defined as noise. If eps is too large, denser clusters may be merged together. This implies that, if there are clusters with different local densities, then a single eps value may not suffice. A natural question is: How to define the optimal value of eps?
+
+The method proposed here consists of computing the he k-nearest neighbor distances in a matrix of points.
+
+The idea is to calculate, the average of the distances of every point to its k nearest neighbors. The value of k will be specified by the user and corresponds to MinPts.
+
+Next, these k-distances are plotted in an ascending order. The aim is to determine the "knee", which corresponds to the optimal eps parameter.
+
+A knee corresponds to a threshold where a sharp change occurs along the k-distance curve.
+
+The function kNNdistplot() [in dbscan package] can be used to draw the k-distance plot:
+
+```{r}
+dbscan::kNNdistplot(df, k =  5)
+abline(h = 0.15, lty = 2)
+
+```
+
+
+### Cluster predictions with DBSCAN algorithm
+
+The function `predict.dbscan(object, data, newdata)` [in `fpc` package] can be used to predict the clusters for the points in newdata. For more details, read the documentation (?predict.dbscan).
+
+7. Load the  `iris` data and and   
+
+## Anomaly detection 
+### 2D ouliers
+
+Anomaly detection is used for different applications. It is a commonly used technique for fraud detection. It is also used in manufacturing to detect anomalous systems such as aircraft engines. It can also be used to identify anomalous medical devices and machines in a data center. You can read more about anomaly detection from Wikipedia.
+
+In this exercise, you will implement an anomaly detection algorithm to detect
+anomalous behavior in server computers. The features measure the throughput (mb/s) and latency (ms) of response of each server. While the servers were operating, we collected m = 307 examples of how they were behaving, and thus have an unlabeled dataset $ \{x_1,\cdots,x_m\}$. We suspect that the vast majority of these examples are \normal" (non-anomalous) examples of the servers operating normally, but there might also be some examples of servers acting anomalously within this dataset.
+
+You will use a Gaussian model to detect anomalous examples in the collected  dataset. You will first start on a 2D dataset that will allow you to visualize what the algorithm is doing. On that dataset you will fit a Gaussian distribution and then find values that have very low probability and hence can be considered anomalies. After that, you will apply the anomaly detection algorithm to a larger dataset with many dimensions. 
+
+You can download the data for the first part of the exercise in RData format from "./data"/ folder. 
+
+The probability density function (PDF) of a multivariate normal is
+
+$$ f(X) = \frac{1}{(2\pi)^{\frac{k}{2}}} |\Sigma|^{\frac{-1}{2}} \exp(-{\frac{1}{2}}(X-\mu)^t\Sigma^{-1}(X-\mu))$$
+
+$\Sigma$ is variance and $|\Sigma|$  is determinant of the variance.  $\mu$ is mean and  $k$   is number of columns (variables) of our data.
+
+1. Load and explore the data. The `data1.RData` is a list of 3 matrices  
+
+* `X`  is 
+
+* `Xval` is the validation data and 
+
+* `yval` is the actual observation of the validation data (whether the servers were anomalous or not).
+
+
+```{r}
+load("./data/data1.RData")
+
+# All the variables below are matrices
+X=data1$X
+Xval=data1$Xval   # This is cross-validation data
+yval =data1$yval  # This shows which rows in Xval are anomalous
+head(X)
+head(Xval)
+table(yval)
+```
+
+
+
+2. We will use a gaussian model to detect anomalous examples in our dataset. So, first, let's check the distribution of the variables and see if they are approximately normally distributed. If they are not close to normal distribution, we have to use appropriate transformations to get good approximations of normal distribuions.
+
+* convert $X$ to a data frame and give the names c("Latency", "Throughput") to  the columns
+* plot the density distribution of the `Latency`  and `Throughput` and conclude that are approximately normally distributed.
+* repat for $Xval$
+
+```{r}
+X           <- as.data.frame(X)
+colnames(X) <-  c("Latency", "Throughput")
+XX          <- X %>% gather(variable, value, Latency, Throughput)
+ggplot(XX, aes(x=value,fill=variable, color=variable))+ geom_density(alpha = 0.3)+ggtitle('Distibution of X')
+
+
+```
+
+```{r}
+Xval           <- as.data.frame(Xval)
+colnames(Xval) <-  c("Latency", "Throughput")
+XXval             <-  Xval %>% gather(variable, value, Latency, Throughput)
+ggplot(XXval, aes(x=value,fill=variable, color=variable))+ geom_density(alpha = 0.3)+ggtitle('Distibution of X')
+
+
+```
+
+
+3. plot a 2D plot and see the joint distribution of Latency and Throughput.
+
+```{r}
+ggplot(X,aes(x=Latency,y=Throughput))+geom_point(color='blue')
+```
+
+4. From the 2D plot detect visually  the outliers. 
+
+5. In the probability density function (PDF)  above, we have  $X-\mu$. Subtract the mean from the data points and call this new data set X2. This is called centering 
+
+You can do it directly, I have used the caret package for this purpose.
+
+```{r}
+library(caret)
+# Create preProcess object
+preObj <- preProcess(X,method="center")
+# Center the data- subtract the column means from the data points
+X2 <- predict(preObj,X)
+X2= as.matrix(X2)
+```
+
+
+6. Calculate variance of X2
+```{r}
+sigma2=var(X2)
+# make it diagonal 
+sigma2= diag(sigma2)
+sigma2= diag(sigma2)
+sigma2
+
+```
+
+Now we have estimated the Gaussian parameters, we can investigate which examples have a very high probability given this distribution and which examples have a very low probability. The low probability examples are more likely to be the anomalies in our dataset. 
+
+
+7. Calculate the probabilities using the multivariate normal distribution equation given above.
+
+```{r}
+A = (2*pi)^(-ncol(X2)/2)*det(sigma2)^(-0.5)
+
+B = exp(-0.5 *rowSums((X2%*%ginv(sigma2))*X2))
+p=A*B
+```
+
+```{r}
+p= p%>%as.data.frame()
+names(p)= c('probability')
+p%>%ggplot(aes(probability))+geom_density(fill='skyblue')+
+ggtitle('Distibution of calculated probabilities')
+```
+From the density plot above, we see there are some values of the centralised data have very low probabilities which could be outliers.
+We can also plot a box plot of the probabilities. Here, I am also showing the points and this helps us to see the probabilities of each server.
+
+
+We can also plot a box plot of the probabilities. Here, I am also showing the points and this helps us to see the probabilities of each server.
+```{r}
+library(plotly)
+p%>%ggplot(aes(y=probability,x=1))+geom_boxplot()+
+geom_point()+xlab('')+ggtitle("Box plot of calculate probabilities")
+# geom_jitter()+xlab('')+ggtitle("Box plot of calculate probabilities")
+pp <- p%>%ggplot(aes(y=probability,x=1))+geom_boxplot()+
+geom_jitter()+xlab('')+ggtitle("Box plot of calculate probabilities")
+pptly <- ggplotly(pp)
+pptly
+
+```
+
+8. create a contour plot of the probabilities and see where the servers with highest probabilities are located.
+
+```{r}
+X= cbind(X,p)
+
+pp <- ggplot(X, aes(x=Latency, y=Throughput, z=probability))+ 
+geom_point()+ stat_density2d(color='red')
+
+pptly <- ggplotly(pp)
+pptly
+
+```
+
+
+
+From the contour plot shown above, we see that most points are near the center and the contours show relatively higher probabilities in this region. We can see that the outliers are dispersed far away from the center of mass. When we are working with 2D data, we may be able to identify the outliers visually but this techniques is specially very useful when we are working with data with more than two dimensions.
+
+
+To determine which of the points shown in the figure above are anomalous, we have to use cross-validation, as suggested in the corsera ML course. From cross-validation, we can get the cut-off probability to classify the servers as normal or anomalous. In data1.RData, Xval is the validation data and yval is the actual observation of the validation data (whether the servers were anomalous or not). We will use F1 score measure to get the threshould probability and also the accuracy of our model.
+
+9. Repeat the process of centralisation and the calculation of the probabilities for the __Xval__ set 
+
+```{r}
+# Create preProcess object
+Xval = as.data.frame(Xval)
+preObj <- preProcess(Xval,method="center")
+
+# Center the data- subtract the column means from the data points
+
+Xval_centered <- predict(preObj,Xval)
+# Then, calculate its variance.
+Xval_centered = as.matrix(Xval_centered)
+sigma2=diag(var(Xval_centered))
+sigma2 = diag(sigma2)
+sigma2
+# Now, lcalculate pval of the cross-validation data Xval.
+A=(2*pi)^(-ncol(Xval_centered)/2)*det(sigma2)^(-0.5)
+B = exp(-0.5 *rowSums((Xval_centered%*%ginv(sigma2))*Xval_centered))
+pval = A*B
+```
+
+
+For cross-validation, let's use F1 score as suggested in the ML course, which uses _precision_ and _recall_ . Precision and rcall in turn are calculated using true positive, false positive and false negative as defined below.
+
+* $t_p$ is the number of true positives: the label says it's an anomaly and our algorithm correctly classied it as an anomaly.
+* $f_p$ is the number of false positives: the label says it's not an anomaly, but our algorithm incorrectly classied it as an anomaly.
+* $f_n$ is the number of false negatives: the label says it's an anomaly, but our algorithm incorrectly classied it as not being anomalous.
+The F1 score is computed using precision (prec) and recall (rec):
+
+$$ \text{prec} = \frac{t_p}{t_p+ f_p}$$
+$$ \text{rec} = \frac{t_p}{t_p+ f_n}$$
+$$ F_1 = 2.\frac{\text{prec}.\text{rec}}{\text{prec}+\text{rec}}$$
+The code chunk below calculates the probability cutt-off value for the maximum possible F1 score through cross-validation.
+
+```{r}
+bestEpsilon = 0
+bestF1 = 0
+F1 = 0
+
+stepsize = (max(pval) - min(pval)) / 1000
+
+for (epsilon in seq(from =min(pval), by= stepsize,to =max(pval))){
+
+    predictions = (pval < epsilon)*1
+  
+    tp = sum((predictions == 1) & (yval == 1))
+    fp = sum((predictions == 1) & (yval == 0))
+    fn = sum((predictions == 0) & (yval == 1))
+    prec = tp / (tp + fp)
+    rec = tp / (tp + fn)
+    F1 = (2 * prec * rec) / (prec + rec)
+    
+ if (!is.na(F1)& (F1 > bestF1)==TRUE){
+       bestF1 = F1
+       bestEpsilon = epsilon
+    
+}
+   }
+
+cat("\n bestF1 =",round(bestF1,4))
+cat("\n bestEpsilon =",round(bestEpsilon,4))
+```
+
+So, from the result above, the best F1 score from the cross-validation is 0.875. 
+
+
+10. Use the bestEpsilon above as cut-off to classify the servers as anomalous or normal
+
+
+```{r}
+X$outliers= X$probability < bestEpsilon
+X$outliers=as.factor(X$outliers)
+head(X)
+```
+
+
+11. Calculate how many outliers we have according to our model and  visualize which servers are outliers.
+
+```{r}
+table(X$outliers)
+X%>%ggplot(aes(x=Latency,y=Throughput))+
+             geom_point(aes(color=outliers))+ggtitle('Anomaly Detection')
+```
+
+
+11. Extract the ouliers using the DBSCAN algorithm 
+
+
+
+
+```{r}
+library("fpc")
+dbscan::kNNdistplot(X2, k =  2)
+abline(h = 0.9, lty = 2)
+
+# Compute DBSCAN using fpc package
+dbX2 <- fpc::dbscan(X2, eps = 0.7, MinPts = 2)
+# Plot DBSCAN results
+plot.dbscan(dbX2, X2, main = "DBSCAN", frame = FALSE)
+
+fviz_cluster(dbX2, X2, stand = FALSE, ellipse = TRUE, geom = "point")
+```
+
+### Multidimensional Outliers
+
+1. use the code from the previous part on a more realistic and much harder dataset. In this dataset, each example is described by 11 features, capturing many more properties of our compute servers. First load the `data2.RData` form "./data/" 
+
+2. Repeat the question 1. above using the `DBSCAN` algorithm. 
+
