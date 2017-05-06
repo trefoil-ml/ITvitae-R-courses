@@ -51,15 +51,13 @@ knitr::opts_chunk$set(
 
 ##  Table of Contents
 
-1. Types of Clustering Techniques
-2. Distance Calculation for Clustering
-3. K-means Clustering | How does it work?
+1. Types of clustering techniques
+2. Distance calculation for clustering
+3. K-means clustering | How does it works?
 4. How to select the best value of k in k means?
-5. Hierarchical Clustering | How does it work?
-6. What are the evaluation methods used in cluster analysis?
-7. Clustering in R - Water Treatment Plans
-
-
+5. K-medoids clustering | how it works
+6. DBSCAN
+7. Model based clustering models
 
 ## Types of Clustering Techniques
 
@@ -67,16 +65,14 @@ knitr::opts_chunk$set(
 
 Among these different clustering algorithms, there exists clustering behaviors known as
 
-+ Soft Clustering: In this technique, the probability or likelihood of an observation being partitioned into a cluster is calculated.
++ Model based lustering: In this technique, the probability or likelihood of an observation being partitioned into a cluster is calculated.
 
-+ Hard Clustering: In hard clustering, an observation is partitioned into exactly one cluster (no probability is calculated).
-ollowing techniques:
-
-
++ Non-parametric clustering: an observation is partitioned into exactly one cluster (no probability is calculated).
 
 ## Distance calculation for clustering
 
-1. Distance calculations quantitative variables are highly influenced by variable units and magnitude. Standardize!
+1. Distance calculations for quantitative variables are highly influenced by variable units and magnitude. Standardize!
+
 2. Use of a particular distance measure depends on the variable types.
 
 Suppose, we are given a 2-dimensional data with 
@@ -84,26 +80,8 @@ Suppose, we are given a 2-dimensional data with
 $$X = (x_1, x_2,\cdots,x_p)$$ 
 and 
 $$Y = (y_1, y_2, \cdots, y_p)$$
- Both are numeric variables. We can calculate various distances as follows:
- 
-## Why Standardization?
- 
- <div align="center">
-  <img src="img/scale1.png"  width="75%" height="75%"/> 
-</div>
+We can calculate various distances as follows:
 
-
-## Why Standardization?
- 
- <div align="center">
-  <img src="img/scale2.png"  width="75%" height="75%"/> 
-</div>
-
-## Why Standardization?
- 
- <div align="center">
-  <img src="img/scale3.png"  width="75%" height="75%"/> 
-</div>
 
 ## Distance calculation for clustering
 
@@ -125,12 +103,7 @@ Hamming Distance: $d(x, y) = \sum(x_i \neq  y_i)$
 
 * Cosine Similarity 
 
-
-## Distance calculation for clustering
-
-### Gower Distance 
-
-
+ 
 ## Distance calculation for clustering
 
 ### Cosine Similarity 
@@ -170,6 +143,31 @@ b: [2, 1, 1, 1, 1, 0, 1, 1]
 $$ \text{cos-similarity}(X,Y) = \cos(X, Y) = \frac{X . Y}{||X||.||Y||} $$
 
 The cosine of the angle between $a$ and $b$ is about 0.822.
+
+
+## Why Standardization?
+ 
+ <div align="center">
+  <img src="img/scale1.png"  width="75%" height="75%"/> 
+</div>
+
+
+
+## Why Standardization?
+ 
+ <div align="center">
+  <img src="img/scale2.png"  width="75%" height="75%"/> 
+</div>
+
+## Why Standardization?
+ 
+ <div align="center">
+  <img src="img/scale3.png"  width="75%" height="75%"/> 
+</div>
+
+
+
+
 
 
 ## K-means clustering:  How does it work ?
